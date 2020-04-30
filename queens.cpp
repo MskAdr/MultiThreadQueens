@@ -1,8 +1,7 @@
 #include <algorithm>
-#include <thread>
 #include <iostream>
+#include <thread>
 #include <vector>
-#include <chrono>
 
 constexpr size_t MAXQUEEN=20;
 
