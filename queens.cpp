@@ -1,12 +1,12 @@
 #include <algorithm>
-#include <iostream>
 #include <thread>
+#include <iostream>
 #include <vector>
 
 constexpr size_t MAXQUEEN=20;
-
 using ui64 = unsigned long long;
 using std::vector;
+
 class TreeArray{
 private:
     vector<int> tree;
@@ -71,32 +71,54 @@ vector<int> reverse_cantor(size_t N,ui64 order){
     return result;
 }
 
-bool checkQueens(const vector<int>& index){
+ui64 cantor(size_t N, const vector<int>& index){
+    ui64 order=0;
+    TreeArray record(N);
+    for(int i=1;i<=N;i++){
+        record.update(i,1);
+    }
+    for(int i=0;i<N-1;i++){
+        ui64 rank = record.get(index[i])-1;
+        record.update(index[i],-1);
+        order += rank*facts.num[N-1-i];
+    }
+    return order;
+}
+
+int checkQueens(const vector<int>& index){
     const int N=index.size();
     vector<bool> lDia(2*N-1,false),rDia(2*N-1,false);
     for(int i=0;i<N;++i){
         if(lDia[i-index[i]+N]){
-            return false;
+            return i+1;
         } else {
             lDia[i-index[i]+N] = true;
         }
         if(rDia[i+index[i]-1]){
-            return false;
+            return i+1;
         } else {
             rDia[i+index[i]-1] = true;
         }
     }
-    return true;
+    return 0;
 }
 
 void findQueens(size_t N, ui64 start, ui64 end, ui64& ways){
     auto index = reverse_cantor(N,start);
+    auto pos = start;
     ui64 result=0;
-    for(auto i=start;i<end;i++){
-        if(checkQueens(index)){ result++; }
-        std::next_permutation(index.begin(),index.end());
-    }
-    std::cout << "Find " << result << " results in this thread.\n";
+    ui64 space=0;
+    do{
+        int check = checkQueens(index);
+        ++pos; ++space;
+        if(check==0){
+            ++result;
+        } else {
+            sort(index.rbegin(),index.rend()-check);
+            pos=cantor(N, index);
+        }
+    }while(std::next_permutation(index.begin(),index.end()) && pos>start && pos<end);
+    std::cout << "Searched " << space << " possible solutions, found " << result << " results in this thread(" << std::this_thread::get_id() << ").\n";
     ways+=result;
 }
 
@@ -110,11 +132,11 @@ int main(){
     ui64 result = 0;
     ui64 begin = 0;
     for(int i=0;i<T;i++){
-        ui64 end = i!=T-1? begin+facts.num[N]/T :facts.num[N];
+        ui64 end = i!=T-1? begin+facts.num[N]/T :facts.num[N]-1;
         threads.emplace_back(std::thread(findQueens,N,begin,end,std::ref(result)));
-        threads[i].join();
         begin = end;
     }
+    std::for_each(threads.begin(), threads.end(), std::mem_fn(&std::thread::join));
     std::cout << result << std::endl;
     return 0;
 }
