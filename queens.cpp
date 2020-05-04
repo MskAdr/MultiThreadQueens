@@ -115,10 +115,11 @@ void findQueens(size_t N, ui64 start, ui64 end, ui64& ways){
             ++result;
         } else {
             sort(index.rbegin(),index.rend()-check);
-            pos=cantor(N, index);
+            pos=cantor(N, index)+1;
         }
     }while(std::next_permutation(index.begin(),index.end()) && pos>start && pos<end);
-    std::cout << "Searched " << space << " possible solutions, found " << result << " results in this thread(" << std::this_thread::get_id() << ").\n";
+    //std::cout << start << " " << pos << " " << end << std::endl;
+    std::cout << "Searched " << space << " possible solutions, found " << result*2 << " results in thread #" << std::this_thread::get_id() << ".\n";
     ways+=result;
 }
 
@@ -131,12 +132,13 @@ int main(){
     vector<std::thread> threads;
     ui64 result = 0;
     ui64 begin = 0;
+    ui64 total = facts.num[N]/2;
     for(int i=0;i<T;i++){
-        ui64 end = i!=T-1? begin+facts.num[N]/T :facts.num[N]-1;
+        ui64 end = i!=T-1? begin+total/T :total;
         threads.emplace_back(std::thread(findQueens,N,begin,end,std::ref(result)));
         begin = end;
     }
     std::for_each(threads.begin(), threads.end(), std::mem_fn(&std::thread::join));
-    std::cout << result << std::endl;
+    std::cout << result*2 << std::endl;
     return 0;
 }
